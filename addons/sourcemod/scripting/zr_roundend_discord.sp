@@ -18,6 +18,7 @@
 #define CODE_BLOCK_END      "\n```"
 #define MAX_RETRY_DELAY     60.0
 #define DEFAULT_RETRY_DELAY 2.0
+#define MAX_QUEUED_MESSAGES 64
 
 ConVar g_cvWebhook, g_cvWebhookRetry, g_cvUsername, g_cvAvatar, g_cvChannelType, g_cvThreadID;
 
@@ -38,7 +39,7 @@ public Plugin myinfo =
 	name = "[ZR] RoundEnd Discord",
 	author = "Rushaway",
 	description = "Sends round-end stats to Discord via webhook.",
-	version = "1.2.1",
+	version = "1.2.2",
 	url = ""
 };
 
@@ -193,9 +194,18 @@ void SendRoundEndToDiscord()
 		}
 	}
 
+	// ZR can report two round ends a second apart: a payload that comes while the previous one
+	// is still being sent goes to the end of the queue, so it is sent right after it
 	if (g_bQueueSending)
 	{
-		LogError("%s Previous Discord batch is still sending, skipping this round-end payload.", PLUGIN_TAG);
+		if (g_hSendQueue.Length >= MAX_QUEUED_MESSAGES)
+		{
+			LogError("%s %d Discord messages are already waiting, skipping this round-end payload.", PLUGIN_TAG, g_hSendQueue.Length);
+			return;
+		}
+
+		g_hSendQueue.PushString(g_sRoundHeader);
+		QueueCodeBlockChunked(g_sRoundOutput);
 		return;
 	}
 
