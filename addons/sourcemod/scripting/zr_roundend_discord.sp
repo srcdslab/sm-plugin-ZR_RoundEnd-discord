@@ -39,7 +39,7 @@ public Plugin myinfo =
 	name = "[ZR] RoundEnd Discord",
 	author = "Rushaway",
 	description = "Sends round-end stats to Discord via webhook.",
-	version = "1.2.2",
+	version = "1.2.3",
 	url = ""
 };
 
